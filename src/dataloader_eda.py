@@ -12,17 +12,22 @@ def load_data():
     train.drop_duplicates(subset='image', inplace=True, ignore_index=True)
     return test_path, train_path, train
 
+from augmentation import simple_augmentation  # Add this import
+
 def data_generator(df=train, batch_size=16, path=train_path):
     test_path, train_path, train = load_data()
+    aug = simple_augmentation().flow(np.zeros((1, 380, 676, 3)), batch_size=batch_size, shuffle=False)  # Initialize augmentation
     while True:        
         images = np.zeros((batch_size, 380, 676, 3))
         bounding_box_coords = np.zeros((batch_size, 4))
         
         for i in range(batch_size):
-                rand_index = np.random.randint(0, train.shape[0])
-                row = df.loc[rand_index, :]
-                images[i] = cv2.imread(str(train_path/row.image)) / 255.
-                bounding_box_coords[i] = np.array([row.xmin, row.ymin, row.xmax, row.ymax])
+            rand_index = np.random.randint(0, train.shape[0])
+            row = df.loc[rand_index, :]
+            image = cv2.imread(str(train_path/row.image)) / 255.
+            image = aug.random_transform(image)  # Apply augmentation
+            images[i] = image
+            bounding_box_coords[i] = np.array([row.xmin, row.ymin, row.xmax, row.ymax])
                 
         yield {'image': images}, {'coords': bounding_box_coords}
 
