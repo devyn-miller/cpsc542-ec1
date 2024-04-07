@@ -1,24 +1,27 @@
-from src.augmentation import augment
+import numpy as np
 import tensorflow as tf
-def predict(model, test_batches):
-    train_batches, test_batches, display, sample_image, sample_mask = augment()
-    """Try out the model to check what it predicts before training:"""
+from dataloader_eda import load_data
+from tensorflow.keras.preprocessing.image import img_to_array, load_img
 
-    def create_mask(pred_mask):
-        # Create a mask from the predicted mask
-        pred_mask = tf.math.argmax(pred_mask, axis=-1)
-        pred_mask = pred_mask[..., tf.newaxis]
-        return pred_mask[0]
+# Load the trained model
+model = tf.keras.models.load_model('car-object-detection.h5')
 
-    def show_predictions(dataset=None, num=1):
-        # Show the predictions
-        if dataset:
-            for image, mask in dataset.take(num):
-                pred_mask = model.predict(image)
-                display([image[0], mask[0], create_mask(pred_mask)])
-        else:
-            display([sample_image, sample_mask,
-                    create_mask(model.predict(sample_image[tf.newaxis, ...]))])
+def predict_bounding_box(image_path):
+    """
+    Predicts the bounding box coordinates for a given image.
 
-    show_predictions(test_batches, 3)
-    return show_predictions
+    Parameters:
+    - image_path: Path to the image file.
+
+    Returns:
+    - pred_coords: Predicted bounding box coordinates (xmin, ymin, xmax, ymax).
+    """
+    # Load and preprocess the image
+    _, train_path, _ = load_data()  # Assuming the image is in the training path
+    img = load_img(train_path / image_path, target_size=(380, 676))
+    img_array = img_to_array(img) / 255.0
+    img_array = np.expand_dims(img_array, axis=0)  # Model expects 4D tensor
+    predictions = model.predict(img_array)
+    # Assuming the model returns coordinates in the format [xmin, ymin, xmax, ymax]
+    pred_coords = predictions[0]
+    return pred_coords
