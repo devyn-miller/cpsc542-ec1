@@ -12,11 +12,12 @@ def load_data():
     train.drop_duplicates(subset='image', inplace=True, ignore_index=True)
     return test_path, train_path, train
 
-from augmentation import augmentation  # Add this import
-
-def data_generator(df=train, batch_size=16, path=train_path):
+def data_generator(df, batch_size, path, augmentation=None):
     test_path, train_path, train = load_data()
-    aug = augmentation().flow(np.zeros((1, 380, 676, 3)), batch_size=batch_size, shuffle=False)  # Initialize augmentation
+    if augmentation is not None:
+        aug = augmentation.flow(np.zeros((1, 380, 676, 3)), batch_size=batch_size, shuffle=False)  # Use passed augmentation
+    else:
+        aug = None  # Handle case where no augmentation is provided
     while True:        
         images = np.zeros((batch_size, 380, 676, 3))
         bounding_box_coords = np.zeros((batch_size, 4))
@@ -25,7 +26,8 @@ def data_generator(df=train, batch_size=16, path=train_path):
             rand_index = np.random.randint(0, train.shape[0])
             row = df.loc[rand_index, :]
             image = cv2.imread(str(train_path/row.image)) / 255.
-            image = aug.random_transform(image)  # Apply augmentation
+            if aug is not None:
+                image = aug.random_transform(image)  # Apply passed augmentation
             images[i] = image
             bounding_box_coords[i] = np.array([row.xmin, row.ymin, row.xmax, row.ymax])
                 

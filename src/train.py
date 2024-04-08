@@ -5,12 +5,15 @@ from model import ShowTestImages
 import json
 from kerastuner.tuners import RandomSearch
 from src.model import MyHyperModel
+import os
+from tensorflow.keras.preprocessing.image import save_img
+from tensorflow.keras.utils import plot_model
 
-def train_model():
+def train_model(epochs=1):  # Add epochs parameter with a default value
     with tf.device('/GPU:0'):
         history = model.fit(
             data_generator(),
-            epochs=1,
+            epochs=epochs,  # Use the epochs parameter here
             steps_per_epoch=5,
             callbacks=[
                 ShowTestImages(),
@@ -20,7 +23,7 @@ def train_model():
     with open('model_history.json', 'w') as file:
         json.dump(history.history, file)
 
-model.save('car-object-detection.h5')
+model.save('/Users/devynmiller/Downloads/ec1-cpsc542/models/car-object-detection.h5')
 
 def tune_model():
     hypermodel = MyHyperModel(input_shape=[380, 676, 3])
@@ -40,4 +43,5 @@ def tune_model():
 
     best_models = tuner.get_best_models(num_models=5)
     for i, model in enumerate(best_models):
-        model.save(f'best_model_{i}.h5')
+        model.save(f'/Users/devynmiller/Downloads/ec1-cpsc542/models/best_model_{i}.h5')
+        plot_model(model, to_file=f'/Users/devynmiller/Downloads/ec1-cpsc542/models/architecture_pngs/model_{i}_architecture.png', show_shapes=True)

@@ -10,7 +10,8 @@ import cv2
 import json
 import matplotlib.patches as patches
 import matplotlib.pyplot as plt
-
+import os
+from tensorflow.keras.preprocessing.image import save_img
 
 def evaluate_model(model_path):
     model = load_model(model_path)
@@ -106,7 +107,7 @@ def evaluate():
 
     # Function to display images with bounding boxes
 
-    def display_with_boxes(image, pred_box, true_box):
+    def display_with_boxes(image, pred_box, true_box, save_path):
         """
         Display an image with predicted and true bounding boxes.
         """
@@ -121,7 +122,8 @@ def evaluate():
         rect_pred = patches.Rectangle((pred_box[0], pred_box[1]), pred_box[2]-pred_box[0], pred_box[3]-pred_box[1], linewidth=1, edgecolor='r', facecolor='none')
         ax.add_patch(rect_pred)
 
-        plt.show()
+        plt.savefig(save_path)
+        plt.close()
 
     # GradCAM or another explainable AI component
     # Assuming you have a function to generate GradCAM visualizations
@@ -154,6 +156,9 @@ def evaluate():
         # Superimpose the heatmap on original image
         superimposed_img = heatmap * 0.4 + img_array
         superimposed_img = np.clip(superimposed_img, 0, 255).astype('uint8')
+
+        gradcam_save_path = f'/Users/devynmiller/Downloads/ec1-cpsc542/PNGs/gradcam/gradcam_image.png'
+        save_img(gradcam_save_path, superimposed_img)
 
         return superimposed_img
 
