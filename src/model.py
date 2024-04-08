@@ -1,5 +1,5 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, MaxPool2D, Flatten, Dense
+from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, MaxPool2D, Flatten, Dense, Activation, GlobalAveragePooling2D
 import matplotlib.pyplot as plt
 from dataloader_eda import data_generator, display_image
 from kerastuner import HyperModel
@@ -44,35 +44,11 @@ def tune_model():
 
     tuner.search_space_summary()
 
-    tuner.search(data_generator(), epochs=10, validation_split=0.2)
+    # Assuming df and path are defined and valid
+    tuner.search(data_generator(df=df, batch_size=32, path=path), epochs=10, validation_split=0.2)
 
     best_model = tuner.get_best_models(num_models=1)[0]
     best_model.save('best_model.h5')
-
-    for i in range(10):
-        n_filters = 2**(i + 3)
-        x = Conv2D(n_filters, 3, activation='relu', padding='same')(x)
-        x = BatchNormalization()(x)
-        x = MaxPool2D(2, padding='same')(x)
-
-    x = Flatten()(x)
-    x = Dense(256, activation='relu')(x)
-    x = Dense(32, activation='relu')(x)
-    output = Dense(4, name='coords')(x)
-
-    model = tf.keras.models.Model(input_, output)
-    model.summary()
-
-    model.compile(
-        loss={
-            'coords': 'mse'
-        },
-        optimizer=tf.keras.optimizers.Adam(1e-3),
-        metrics={
-            'coords': 'accuracy'
-        }
-    )
-
 
     # Some functions to test the model. These will be called every epoch to display the current performance of the model
     def test_model(model, datagen):
@@ -101,4 +77,4 @@ def tune_model():
         def on_epoch_end(self, epoch, logs=None):
             test(self.model)
 
-    return model, test(model)
+    return best_model

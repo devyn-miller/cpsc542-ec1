@@ -127,7 +127,7 @@ test_path = Path("../input/car-object-detection/data/testing_images")
 The dataset contains information about multi-object detection; however, this notebook is concerned with single object detection. To account for this slight discrepancy, we will omit the duplicate values of the `image` column. This results in each image having only one corresponding set of bounding box coordinates.
 """
 
-train = pd.read_csv("../input/car-object-detection/data/train_solution_bounding_boxes (1).csv")
+train = pd.read_csv("../input/car-object-detection/data//Users/devynmiller/Downloads/ec1-cpsc542/data/train_solution_bounding_boxes.csv")
 train[['xmin', 'ymin', 'xmax', 'ymax']] = train[['xmin', 'ymin', 'xmax', 'ymax']].astype(int)
 train.drop_duplicates(subset='image', inplace=True, ignore_index=True)
 

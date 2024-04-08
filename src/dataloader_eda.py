@@ -5,9 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def load_data():
-    train_path = Path("../data/training_images")
-    test_path = Path("../data/testing_images")
-    train = pd.read_csv("../data/train_solution_bounding_boxes (1).csv")
+    train_path = Path("/Users/devynmiller/Downloads/ec1-cpsc542/data/training_images")
+    test_path = Path("/Users/devynmiller/Downloads/ec1-cpsc542/data/testing_images")
+    train = pd.read_csv("/Users/devynmiller/Downloads/ec1-cpsc542/data/train_solution_bounding_boxes.csv")
     train[['xmin', 'ymin', 'xmax', 'ymax']] = train[['xmin', 'ymin', 'xmax', 'ymax']].astype(int)
     train.drop_duplicates(subset='image', inplace=True, ignore_index=True)
     return test_path, train_path, train
@@ -25,7 +25,9 @@ def data_generator(df, batch_size, path, augmentation=None):
         for i in range(batch_size):
             rand_index = np.random.randint(0, train.shape[0])
             row = df.loc[rand_index, :]
-            image = cv2.imread(str(train_path/row.image)) / 255.
+            image_path = str(train_path/row.image)
+            print(f"Attempting to load image from path: {image_path}")  # Debugging line
+            image = cv2.imread(image_path) / 255.
             if aug is not None:
                 image = aug.random_transform(image)  # Apply passed augmentation
             images[i] = image
