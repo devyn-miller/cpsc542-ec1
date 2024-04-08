@@ -12,6 +12,36 @@ import matplotlib.patches as patches
 import matplotlib.pyplot as plt
 
 
+def evaluate_model(model_path):
+    model = load_model(model_path)
+    eval_gen = data_generator(batch_size=32, shuffle=False)  # Adjust as needed
+    results = model.evaluate(eval_gen, steps=50)  # Adjust steps as needed
+    print(f"Results for {model_path}: Loss = {results[0]}, Accuracy = {results[1]}")
+    # Assuming the model's training history is saved in a JSON file named similarly to the model
+    history_path = model_path.replace('.h5', '_history.json')
+    with open(history_path, 'r') as file:
+        history = json.load(file)
+    return history
+
+def plot_model_metrics(history, model_name):
+    # Plotting training and validation accuracy
+    plt.plot(history['accuracy'])
+    plt.plot(history['val_accuracy'])
+    plt.title(f'Model Accuracy for {model_name}')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Val'], loc='upper left')
+    plt.show()
+
+    # Plotting training and validation loss
+    plt.plot(history['loss'])
+    plt.plot(history['val_loss'])
+    plt.title(f'Model Loss for {model_name}')
+    plt.ylabel('Loss')
+    plt.xlabel('Epoch')
+    plt.legend(['Train', 'Val'], loc='upper left')
+    plt.show()
+
 def evaluate():
     # Load the trained model
     model = load_model('car-object-detection.h5')
@@ -32,24 +62,6 @@ def evaluate():
     with open('model_history.json', 'r') as file:
         history = json.load(file)
     
-    # # Plotting training and validation accuracy
-    # plt.plot(history['accuracy'])
-    # plt.plot(history['val_accuracy'])
-    # plt.title('Model Accuracy')
-    # plt.ylabel('Accuracy')
-    # plt.xlabel('Epoch')
-    # plt.legend(['Train', 'Val'], loc='upper left')
-    # plt.show()
-
-    # # Plotting training and validation loss
-    # plt.plot(history['loss'])
-    # plt.plot(history['val_loss'])
-    # plt.title('Model Loss')
-    # plt.ylabel('Loss')
-    # plt.xlabel('Epoch')
-    # plt.legend(['Train', 'Val'], loc='upper left')
-    # plt.show()
-
     # Display a table of metrics
     metrics_table = pd.DataFrame({'Metric': ['Loss', 'Accuracy', 'Validation Loss', 'Validation Accuracy'], 'Value': results + val_results})
     print(metrics_table)
@@ -110,14 +122,6 @@ def evaluate():
         ax.add_patch(rect_pred)
 
         plt.show()
-
-    # # Display best 3
-    # for iou, image, pred_box, true_box in best_3:
-    #     display_with_boxes(image, pred_box, true_box)
-
-    # # Display worst 3
-    # for iou, image, pred_box, true_box in worst_3:
-    #     display_with_boxes(image, pred_box, true_box)
 
     # GradCAM or another explainable AI component
     # Assuming you have a function to generate GradCAM visualizations
