@@ -125,10 +125,8 @@ def evaluate():
 
     # GradCAM or another explainable AI component
     # Assuming you have a function to generate GradCAM visualizations
-    def generate_gradcam(model, img_array, layer_name):
-        """
-        Generate a GradCAM visualization for a specific layer.
-        """
+    def generate_gradcam(model_path, img_array, layer_name):
+        model = load_model(model_path)
         grad_model = Model(inputs=[model.inputs], outputs=[model.get_layer(layer_name).output, model.output])
 
         with tf.GradientTape() as tape:
