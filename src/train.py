@@ -10,6 +10,8 @@ from tensorflow.keras.preprocessing.image import save_img
 from tensorflow.keras.utils import plot_model
 import logging
 from tqdm import tqdm
+from ipywidgets import IntProgress
+from IPython.display import display
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -17,7 +19,9 @@ def train_model(epochs=1, batch_size=32):  # Add batch_size parameter
     total_images = len(data_generator().dataset)  # Assuming data_generator has a dataset attribute
     steps_per_epoch = total_images // batch_size
     logging.info("Starting model training...")
-    for epoch in tqdm(range(epochs)):
+    progress = IntProgress(min=0, max=epochs)  # epochs should be defined earlier in your code
+    display(progress)
+    for epoch in range(epochs):
         history = model.fit(
             data_generator(),
             epochs=1,  # Running one epoch at a time within tqdm loop
@@ -26,6 +30,7 @@ def train_model(epochs=1, batch_size=32):  # Add batch_size parameter
                 ShowTestImages(),
             ]
         )
+        progress.value += 1  # Update the progress bar
     logging.info("Model training completed.")
     # Save the training history
     with open('model_history.json', 'w') as file:
