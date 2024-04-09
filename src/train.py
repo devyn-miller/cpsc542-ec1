@@ -8,17 +8,25 @@ from src.model import MyHyperModel
 import os
 from tensorflow.keras.preprocessing.image import save_img
 from tensorflow.keras.utils import plot_model
+import logging
+from tqdm import tqdm
 
-def train_model(epochs=1):  # Add epochs parameter with a default value
-    with tf.device('/GPU:0'):
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
+def train_model(epochs=1, batch_size=32):  # Add batch_size parameter
+    total_images = len(data_generator().dataset)  # Assuming data_generator has a dataset attribute
+    steps_per_epoch = total_images // batch_size
+    logging.info("Starting model training...")
+    for epoch in tqdm(range(epochs)):
         history = model.fit(
             data_generator(),
-            epochs=epochs,  # Use the epochs parameter here
-            steps_per_epoch=5,
+            epochs=1,  # Running one epoch at a time within tqdm loop
+            steps_per_epoch=steps_per_epoch,  # Dynamically calculated steps_per_epoch
             callbacks=[
                 ShowTestImages(),
             ]
         )
+    logging.info("Model training completed.")
     # Save the training history
     with open('model_history.json', 'w') as file:
         json.dump(history.history, file)
@@ -39,7 +47,9 @@ def tune_model():
 
     tuner.search_space_summary()
 
+    logging.info("Starting model tuning...")
     tuner.search(data_generator(), epochs=10, validation_split=0.2)
+    logging.info("Model tuning completed.")
 
     best_models = tuner.get_best_models(num_models=5)
     for i, model in enumerate(best_models):

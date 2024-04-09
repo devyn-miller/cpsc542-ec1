@@ -1,9 +1,13 @@
 import tensorflow as tf
-from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, MaxPool2D, Flatten, Dense, Activation, GlobalAveragePooling2D
+from tensorflow.keras.layers import Input, Conv2D, BatchNormalization, MaxPool2D, Flatten, Dense, Activation, GlobalAveragePooling2D, MaxPooling2D
 import matplotlib.pyplot as plt
-from dataloader_eda import data_generator, display_image
+# from dataloader_eda import data_generator, display_image
 from kerastuner import HyperModel
 from kerastuner.tuners import RandomSearch
+from tqdm import tqdm
+import logging
+
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 class MyHyperModel(HyperModel):
     def __init__(self, input_shape):
@@ -30,9 +34,38 @@ class MyHyperModel(HyperModel):
                       metrics=['accuracy'])
         return model
 
-def tune_model():
+class ShowTestImages(tf.keras.callbacks.Callback):
+    def __init__(self, test_func):
+        super(ShowTestImages, self).__init__()
+        self.test_func = test_func
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.test_func(self.model)
+
+def tune_model(data_generator, display_image, df, path, epochs):
     hypermodel = MyHyperModel(input_shape=[380, 676, 3])
 
+    def test_model(model, datagen):
+        example, label = next(datagen)
+        
+        X = example['image']
+        y = label['coords']
+        
+        pred_bbox = model.predict(X)[0]
+        
+        img = X[0]
+        gt_coords = y[0]
+        
+        display_image(img, pred_coords=pred_bbox, norm=True)
+
+    def test(model):
+        datagen = data_generator(batch_size=1)
+        
+        plt.figure(figsize=(15,7))
+        for i in tqdm(range(3), desc="Testing model"):
+            plt.subplot(1, 3, i + 1)
+            test_model(model, datagen)    
+        plt.show()
     tuner = RandomSearch(
         hypermodel,
         objective='val_accuracy',
@@ -44,8 +77,10 @@ def tune_model():
 
     tuner.search_space_summary()
 
+    logging.info("Starting model tuning...")
     # Assuming df and path are defined and valid
-    tuner.search(data_generator(df=df, batch_size=32, path=path), epochs=10, validation_split=0.2)
+    tuner.search(data_generator(df=df, batch_size=32, path=path), epochs=epochs, callbacks=[ShowTestImages(test)])
+    logging.info("Model tuning completed.")
 
     best_model = tuner.get_best_models(num_models=1)[0]
     best_model.save('best_model.h5')
@@ -73,8 +108,7 @@ def tune_model():
             test_model(model, datagen)    
         plt.show()
         
-    class ShowTestImages(tf.keras.callbacks.Callback):
-        def on_epoch_end(self, epoch, logs=None):
-            test(self.model)
-
     return best_model
+
+
+

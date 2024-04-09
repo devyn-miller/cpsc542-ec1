@@ -5,9 +5,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 def load_data():
-    train_path = Path("/Users/devynmiller/Downloads/ec1-cpsc542/data/training_images")
-    test_path = Path("/Users/devynmiller/Downloads/ec1-cpsc542/data/testing_images")
-    train = pd.read_csv("/Users/devynmiller/Downloads/ec1-cpsc542/data/train_solution_bounding_boxes.csv")
+    train_path = Path("data/training_images")
+    test_path = Path("data/testing_images")
+    train = pd.read_csv("data/train_solution_bounding_boxes.csv")
     train[['xmin', 'ymin', 'xmax', 'ymax']] = train[['xmin', 'ymin', 'xmax', 'ymax']].astype(int)
     train.drop_duplicates(subset='image', inplace=True, ignore_index=True)
     return test_path, train_path, train

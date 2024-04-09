@@ -13,10 +13,13 @@ import matplotlib.pyplot as plt
 import os
 from tensorflow.keras.preprocessing.image import save_img
 
-def evaluate_model(model_path):
+def evaluate_model(model_path, batch_size=32):  # Add batch_size parameter
+    total_images = len(data_generator().dataset)  # Assuming data_generator has a dataset attribute
+    steps = total_images // batch_size
+    
     model = load_model(model_path)
-    eval_gen = data_generator(batch_size=32, shuffle=False)  # Adjust as needed
-    results = model.evaluate(eval_gen, steps=50)  # Adjust steps as needed
+    eval_gen = data_generator(batch_size=batch_size, shuffle=False)
+    results = model.evaluate(eval_gen, steps=steps)
     print(f"Results for {model_path}: Loss = {results[0]}, Accuracy = {results[1]}")
     # Assuming the model's training history is saved in a JSON file named similarly to the model
     history_path = model_path.replace('.h5', '_history.json')
@@ -51,12 +54,14 @@ def evaluate():
     eval_gen = data_generator(batch_size=32, shuffle=False)  # Adjust parameters as needed
 
     # Evaluate the model
-    results = model.evaluate(eval_gen, steps=50)  # Adjust steps based on your dataset size
+    total_images = len(data_generator().dataset)  # Assuming data_generator has a dataset attribute
+    steps = total_images // 32
+    results = model.evaluate(eval_gen, steps=steps)  # Adjust steps based on your dataset size
     print("Test Loss, Test Accuracy:", results)
 
     # Evaluate the model on validation data
     val_gen = data_generator(batch_size=32, shuffle=False)  # Make sure this generates validation data
-    val_results = model.evaluate(val_gen, steps=50)  # Adjust steps accordingly
+    val_results = model.evaluate(val_gen, steps=steps)  # Adjust steps accordingly
     print("Validation Loss, Validation Accuracy:", val_results)
 
     # Load the training history
