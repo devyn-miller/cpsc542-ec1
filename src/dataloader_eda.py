@@ -3,6 +3,17 @@ import cv2
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
+from tensorflow.keras.callbacks import Callback
+from tqdm.notebook import tqdm
+
+class TQDMNotebookCallback(Callback):
+    def on_train_begin(self, logs=None):
+        self.epochs = self.params['epochs']
+        self.progress_bar = tqdm(total=self.epochs)
+        self.progress_bar.set_description('Training Progress')
+
+    def on_epoch_end(self, epoch, logs=None):
+        self.progress_bar.update(1)
 
 def load_data():
     train_path = Path("data/training_images")
@@ -70,9 +81,21 @@ def display_from_dataframe(row):
     
 
 def display_grid(df, n_items=10):
-        plt.figure(figsize=(20, 10))
-        
-        # get 10 random entries and plot them in a 2x5 grid
+    plt.figure(figsize=(20, 10))
+    
+    # Assuming you want a grid of 5x2 (5 columns, 2 rows)
+    cols = 5
+    rows = n_items // cols
+    
+    rand_indices = [np.random.randint(0, df.shape[0]) for _ in range(n_items)]
+    
+    for i, index in enumerate(rand_indices):
+        plt.subplot(rows, cols, i + 1)
+        row = df.loc[index, :]
+        test_path, train_path, train = load_data()  # Load paths correctly
+        img = cv2.imread(str(train_path/row['image']))
+        bbox_coords = (row.xmin, row.ymin, row.xmax, row.ymax)
+        display_image(img, bbox_coords=bbox_coords)
         rand_indices = [np.random.randint(0, df.shape[0]) for _ in range(n_items)]
         
         for pos, index in enumerate(rand_indices):
