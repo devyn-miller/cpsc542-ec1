@@ -1,40 +1,51 @@
 import tensorflow as tf
+import os
+os.environ['TF_XLA_FLAGS'] = '--tf_xla_auto_jit=2'
 from model import model
 from dataloader_eda import data_generator
 from model import ShowTestImages
 import json
 from kerastuner.tuners import RandomSearch
 from src.model import MyHyperModel
-import os
 from tensorflow.keras.preprocessing.image import save_img
 from tensorflow.keras.utils import plot_model
 import logging
 from tqdm import tqdm
 from ipywidgets import IntProgress
 from IPython.display import display
+from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-def train_model(epochs=1, batch_size=32):  # Add batch_size parameter
+def train_model(epochs=1, batch_size=64):  # Adjusted batch_size parameter
     total_images = len(data_generator().dataset)  # Assuming data_generator has a dataset attribute
     steps_per_epoch = total_images // batch_size
     logging.info("Starting model training...")
     progress = IntProgress(min=0, max=epochs)  # epochs should be defined earlier in your code
     display(progress)
-    for epoch in range(epochs):
+    callbacks_list = [
+        ShowTestImages(),
+        ModelCheckpoint(filepath='model_{epoch:02d}.h5', save_best_only=True, monitor='val_loss'),
+        EarlyStopping(monitor='val_loss', patience=3)
+    ]
+    for epoch in tqdm.tqdm(range(epochs), desc='Epochs'):
         history = model.fit(
             data_generator(),
             epochs=1,  # Running one epoch at a time within tqdm loop
             steps_per_epoch=steps_per_epoch,  # Dynamically calculated steps_per_epoch
-            callbacks=[
-                ShowTestImages(),
-            ]
+            callbacks=callbacks_list
         )
         progress.value += 1  # Update the progress bar
     logging.info("Model training completed.")
     # Save the training history
     with open('model_history.json', 'w') as file:
         json.dump(history.history, file)
+
+model.compile(
+    loss={'coords': 'mse'},
+    optimizer='sgd',  # Changed from Adam to SGD
+    metrics={'coords': 'accuracy'}
+)
 
 model.save('/Users/devynmiller/Downloads/ec1-cpsc542/models/car-object-detection.h5')
 
