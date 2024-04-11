@@ -46,10 +46,16 @@ def plot_model_metrics(history, model_name):
     plt.show()
 
 def display_best_worst_results(predictions):
-    predictions.sort(key=lambda x: x[0], reverse=True)  # Sort by IoU
+    # Assuming predictions is a list of tuples (accuracy, image_path)
+    predictions.sort(key=lambda x: x[0], reverse=True)  # Sort by accuracy
     best_3 = predictions[:3]
     worst_3 = predictions[-3:]
-    # Display or process best_3 and worst_3 as needed
+    print("Best 3 Predictions:")
+    for pred in best_3:
+        print(f"Accuracy: {pred[0]}, Image Path: {pred[1]}")
+    print("\nWorst 3 Predictions:")
+    for pred in worst_3:
+        print(f"Accuracy: {pred[0]}, Image Path: {pred[1]}")
 
 def generate_gradcam(model, img_array, layer_name):
     grad_model = Model(inputs=[model.inputs], outputs=[model.get_layer(layer_name).output, model.output])
