@@ -114,29 +114,3 @@ def tune_model(data_generator, display_image, df, path, epochs):
     best_model = tuner.get_best_models(num_models=1)[0]
     logging.info("Saving the best model as 'best_model.h5'.")
     best_model.save('best_model.h5')
-
-    # Some functions to test the model. These will be called every epoch to display the current performance of the model
-    def test_model(model, datagen, title=""):
-        example, label = next(datagen)
-        
-        X = example['image']
-        y = label['coords']
-        
-        pred_bbox = model.predict(X)[0]
-        
-        img = X[0]
-        gt_coords = y[0]
-        
-        display_image(img, pred_coords=pred_bbox, norm=True)
-        plt.title(title)
-
-    def test(model):
-        datagen = data_generator(batch_size=1)
-        
-        plt.figure(figsize=(15,7))
-        for i in range(3):
-            plt.subplot(1, 3, i + 1)
-            test_model(model, datagen)    
-        plt.show()
-        
-    return best_model
