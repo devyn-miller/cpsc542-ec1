@@ -6,7 +6,7 @@ from dataloader_eda import data_generator
 # from model import ShowTestImages
 import json
 import logging
-# from tqdm import tqdm
+from tqdm import tqdm
 from ipywidgets import IntProgress
 from IPython.display import display
 from tensorflow.keras.callbacks import ModelCheckpoint, EarlyStopping
@@ -21,18 +21,20 @@ def train_model(epochs=1, batch_size=64, model_variant=''):  # Adjusted batch_si
         ModelCheckpoint(filepath=model_variant + '_{epoch:02d}.h5', save_best_only=True, monitor='val_loss'),
         EarlyStopping(monitor='val_loss', patience=3)
     ]
-    for epoch in range(epochs):
+    for epoch in tqdm(range(epochs), desc="Training Progress"):
         history = model.fit(
             data_generator(),
             epochs=1,  # Running one epoch at a time
             steps_per_epoch=steps_per_epoch,  # Dynamically calculated steps_per_epoch
             callbacks=callbacks_list,
-            verbose=1  # Ensures the built-in Keras progress bar is displayed
+            verbose=0  # Disables the built-in Keras progress bar
         )
     logging.info("Model training completed for " + model_variant)
     # Save the training history
     with open(model_variant + '_history.json', 'w') as file:
         json.dump(history.history, file)
+    # Save the model with a distinct name
+    model.save(model_variant + '.h5')
 
 # Example of saving models after training with specific modifications
 # Assuming the training function is called with the appropriate model_variant argument
@@ -48,5 +50,5 @@ model.compile(
     metrics={'coords': 'accuracy'}
 )
 
-model.save('/Users/devynmiller/Downloads/ec1-cpsc542/models/car-object-detection.h5')
+``
 
