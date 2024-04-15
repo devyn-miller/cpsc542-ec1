@@ -46,10 +46,11 @@ def data_generator(df, batch_size, path, augmentation=None):
                 
         yield {'image': images}, {'coords': bounding_box_coords}
 
-# Test the generator
-# example, label = next(data_generator(batch_size=1))
-# img = example['image'][0]
-# bbox_coords = label['coords'][0]
+def load_image(image_path, target_size=(224, 224)):
+    img = cv2.imread(image_path)
+    img = cv2.resize(img, target_size)  # Resize as per your model's requirement
+    img = img / 255.0  # Normalize if your model expects normalized inputs
+    return img
 
 def display_image(img, bbox_coords=[], pred_coords=[], norm=False):
     # if the image has been normalized, scale it up
@@ -94,6 +95,9 @@ def display_grid(df, n_items=10):
         row = df.loc[index, :]
         test_path, train_path, train = load_data()  # Load paths correctly
         img = cv2.imread(str(train_path/row['image']))
+        if img is None:
+            print(f"Failed to load image: {train_path/row['image']}")
+            continue  # Skip this iteration if the image failed to load
         bbox_coords = (row.xmin, row.ymin, row.xmax, row.ymax)
         display_image(img, bbox_coords=bbox_coords)
         rand_indices = [np.random.randint(0, df.shape[0]) for _ in range(n_items)]
@@ -102,7 +106,21 @@ def display_grid(df, n_items=10):
             plt.subplot(2, n_items // 2, pos + 1)
             display_from_dataframe(df.loc[index, :])
 
-# display_image_from_file("vid_4_10520.jpg")
 
-# display_image(img, bbox_coords=bbox_coords, norm=True)
-# display_grid(train)
+# # Example use of display_grid function with a sample dataframe
+# import pandas as pd
+
+# # Sample dataframe
+# data = {
+#     'image': ['image1.jpg', 'image2.jpg', 'image3.jpg', 'image4.jpg', 'image5.jpg',
+#               'image6.jpg', 'image7.jpg', 'image8.jpg', 'image9.jpg', 'image10.jpg'],
+#     'xmin': [30, 50, 20, 45, 55, 65, 35, 25, 60, 40],
+#     'ymin': [60, 70, 50, 65, 75, 85, 55, 45, 80, 60],
+#     'xmax': [130, 150, 120, 145, 155, 165, 135, 125, 160, 140],
+#     'ymax': [160, 170, 150, 165, 175, 185, 155, 145, 180, 160]
+# }
+
+# df = pd.DataFrame(data)
+
+# # Display grid of images with bounding boxes
+# display_grid(df, n_items=10)

@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import logging
 # from tensorflow.keras.callbacks import Callback
 import copy
+from keras_tuner import HyperModel
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
@@ -70,3 +71,12 @@ class MyAdjustedHyperModel(HyperModel):
                       loss='mse',
                       metrics=['accuracy'])
         return model
+
+# At the end of src/model.py
+input_shape = (224, 224, 3)  # Adjust this as per your actual input shape
+hypermodel = MyAdjustedHyperModel(input_shape=input_shape)
+def model():
+    return hypermodel.build(hp=None)  # Assuming hp (HyperParameters) is not needed for this simple example
+
+# # Display model summary to verify the structure
+# model.summary()

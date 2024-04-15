@@ -11,3 +11,6 @@ def create_augmentation():
         horizontal_flip=True,
         fill_mode='nearest'
     )
+
+# # example use
+# augmentation = create_augmentation()

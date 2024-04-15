@@ -1,91 +1,25 @@
-import numpy as np
-import pandas as pd
-import matplotlib.pyplot as plt
-import tensorflow as tf
-from tensorflow.keras.models import load_model
-from tensorflow.keras.preprocessing.image import img_to_array, load_img
-from dataloader_eda import data_generator  # Assuming this generator can be used for evaluation
-from tensorflow.keras import Model
-import cv2
-import json
-import matplotlib.patches as patches
-import matplotlib.pyplot as plt
-import os
-from tensorflow.keras.preprocessing.image import save_img
+def train_all_variants(train_model_func, create_model_func, create_data_generator_func, model_variants):
+    for variant in model_variants:
+        print(f"Training {variant}")
+        
+        model = create_model_func(variant)  # Use create_model_func to create/load the model
+        data_generator = create_data_generator_func(variant)  # Use create_data_generator_func
+        
+        train_model_func(model=model, data_generator=data_generator, epochs=10, batch_size=64, model_variant=variant)
 
-def evaluate_model(model_path, batch_size=32):  # Add batch_size parameter
-    model = load_model(model_path)
-    eval_gen = data_generator(batch_size=batch_size, shuffle=False)
-    total_images = len(data_generator().dataset)
-    steps = total_images // batch_size
-    results = model.evaluate(eval_gen, steps=steps)
-    predictions = model.predict(eval_gen, steps=steps)
-    print(f"Results for {model_path}: Loss = {results[0]}, Accuracy = {results[1]}")
-    history_path = model_path.replace('.h5', '_history.json')
-    with open(history_path, 'r') as file:
-        history = json.load(file)
-    return history, predictions
+def evaluate_all_variants(evaluate_model_func, plot_model_metrics_func, tf, model_variants):
+    # Evaluate each model variant
+    for variant in model_variants:
+        print(f"Evaluating {variant}")
+        model_path = f"{variant}.h5"
+        model = tf.keras.models.load_model(model_path)  # Load model here instead of in evaluation.py
+        history, predictions = evaluate_model_func(model_path=model_path, batch_size=32)
+        plot_model_metrics_func(history, model_name=variant)
+        # Additional evaluation steps...
 
-def plot_model_metrics(history, model_name):
-    # Plotting training and validation accuracy
-    plt.plot(history['accuracy'])
-    plt.plot(history['val_accuracy'])
-    plt.title(f'Model Accuracy for {model_name}')
-    plt.ylabel('Accuracy')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Val'], loc='upper left')
-    plt.show()
-
-    # Plotting training and validation loss
-    plt.plot(history['loss'])
-    plt.plot(history['val_loss'])
-    plt.title(f'Model Loss for {model_name}')
-    plt.ylabel('Loss')
-    plt.xlabel('Epoch')
-    plt.legend(['Train', 'Val'], loc='upper left')
-    plt.show()
-
-def display_best_worst_results(predictions):
-    # Assuming predictions is a list of tuples (accuracy, image_path)
-    predictions.sort(key=lambda x: x[0], reverse=True)  # Sort by accuracy
-    best_3 = predictions[:3]
-    worst_3 = predictions[-3:]
-    print("Best 3 Predictions:")
-    for pred in best_3:
-        print(f"Accuracy: {pred[0]}, Image Path: {pred[1]}")
-    print("\nWorst 3 Predictions:")
-    for pred in worst_3:
-        print(f"Accuracy: {pred[0]}, Image Path: {pred[1]}")
-
-def generate_gradcam(model, img_array, layer_name):
-    grad_model = Model(inputs=[model.inputs], outputs=[model.get_layer(layer_name).output, model.output])
-    with tf.GradientTape() as tape:
-        conv_outputs, predictions = grad_model(np.array([img_array]))
-        loss = predictions[:, np.argmax(predictions[0])]
-
-    output = conv_outputs[0]
-    grads = tape.gradient(loss, conv_outputs)[0]
-
-    gate_f = tf.cast(output > 0, 'float32')
-    gate_r = tf.cast(grads > 0, 'float32')
-    guided_grads = gate_f * gate_r * grads
-
-    weights = tf.reduce_mean(guided_grads, axis=(0, 1))
-    cam = np.dot(output, weights[..., np.newaxis])
-    cam = np.squeeze(cam)
-    cam = cv2.resize(cam, (img_array.shape[1], img_array.shape[0]))
-    cam = np.maximum(cam, 0)
-    heatmap = (cam - cam.min()) / (cam.max() - cam.min())
-
-    # Convert grayscale heatmap to 3D
-    heatmap = np.uint8(255 * heatmap)
-    heatmap = cv2.applyColorMap(heatmap, cv2.COLORMAP_JET)
-
-    # Superimpose the heatmap on original image
-    superimposed_img = heatmap * 0.4 + img_array
-    superimposed_img = np.clip(superimposed_img, 0, 255).astype('uint8')
-
-    gradcam_save_path = f'/Users/devynmiller/Downloads/ec1-cpsc542/PNGs/gradcam/gradcam_image.png'
-    save_img(gradcam_save_path, superimposed_img)
-
-    return superimposed_img
+def predict_with_variants(predict_bounding_box_func, model_variants, image_path='example_image.jpg'):
+    # Predict with each model variant using an example image
+    for variant in model_variants:
+        model_path = f'models/{variant}.h5'  # Construct the model path dynamically
+        print(f"Predicting with {variant}")
+        predict_bounding_box_func(image_path=image_path, model_path=model_path)  # Pass the model path as an argument
